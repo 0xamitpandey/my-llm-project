@@ -15,9 +15,9 @@ WORKDIR /app
 # Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
+# Upgrade pip and install Python dependencies
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -25,8 +25,11 @@ COPY . .
 # Create models directory
 RUN mkdir -p /models
 
+# Optionally download a Hugging Face model (uncomment if needed)
+# RUN python -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='TheBloke/7B-llama2-GGUF', filename='7B-llama2.gguf', cache_dir='/models')"
+
 # Expose port for API
 EXPOSE 8000
 
-# Command to run your app
-CMD ["python", "main.py"]
+# Run the FastAPI server with uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
