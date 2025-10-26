@@ -1,4 +1,4 @@
-fastapi
-uvicorn[standard]
 llama-cpp-python[server]
 huggingface-hub
+fastapi
+uvicorn
