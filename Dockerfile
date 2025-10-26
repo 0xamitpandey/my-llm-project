@@ -1,35 +1,32 @@
-# Base image
-FROM python:3.13-slim
-
-# Set workdir
-WORKDIR /app
+# Use official Python image
+FROM python:3.11-slim
 
 # Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        cmake \
-        git \
-        wget \
-        libopenblas-dev \
-        ninja-build \
-        && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy app
-COPY ./app /app
+# Set working directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Make models directory
+# Copy application code
+COPY . .
+
+# Create models directory
 RUN mkdir -p /models
 
-# Download model from Hugging Face (example 7B)
-RUN python -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='TheBloke/7B-llama2-GGUF', filename='7B-llama2.gguf', cache_dir='/models')"
-
-# Expose port
+# Expose port for API
 EXPOSE 8000
 
-# Start FastAPI with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Command to run your app
+CMD ["python", "main.py"]
