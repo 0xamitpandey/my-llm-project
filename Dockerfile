@@ -1,18 +1,5 @@
-# Use official Python slim image
+# Start from Python base image
 FROM python:3.11-slim
-
-# Set environment variables to avoid prompts during install
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    git \
-    curl \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -20,22 +7,25 @@ WORKDIR /app
 # Copy requirements
 COPY requirements.txt .
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir huggingface-hub
 
-# Copy all app code
-COPY . .
-
-# Create models directory
+# Make model directory
 RUN mkdir -p /models
 
-# Download Hugging Face model (example 7B LLaMA2 GGUF)
-RUN python -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='TheBloke/7B-llama2-GGUF', filename='7B-llama2.gguf', cache_dir='/models')"
+# Copy app code
+COPY . .
 
-# Expose API port
-EXPOSE 8000
+# Set environment variables (these should be added as Render secrets)
+ENV HF_TOKEN=${HF_TOKEN}   # Your Hugging Face token
+ENV OTHER_KEY=${OTHER_KEY} # Any other key you need
 
-# Command to run your app
-CMD ["python", "main.py"]
+# Download the model using the HF token
+RUN python -c "from huggingface_hub import hf_hub_download; import os; \
+hf_hub_download(repo_id='TheBloke/7B-llama2-GGUF', filename='7B-llama2.gguf', cache_dir='/models', token=os.environ['HF_TOKEN'])"
+
+# Expose port
+EXPOSE 8080
+
+# Start the app
+CMD ["python", "app.py"]
